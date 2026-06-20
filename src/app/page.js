@@ -129,7 +129,7 @@ function CheckoutContent() {
     const sessionToken = searchParams.get("session");
     if (!sessionToken) {
       webLog.warn(SCOPE, "Session token missing, redirecting to fallback page");
-      window.location.replace("https://curso.mamadecasa.com/congela");
+      window.location.replace("https://www.nbourchier.com/guiadecompras");
       return;
     }
     sessionTokenRef.current = sessionToken;
