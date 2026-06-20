@@ -6,6 +6,7 @@ const ALLOWED_ORIGINS = [
   /^https:\/\/.*\.systeme\.io$/,
   "http://localhost:3000",
   "https://www.nbourchier.com",
+  "https://pago.nbourchier.com/",
   "https://comprehensive-upon-leaving-managers.trycloudflare.com"
 ];
 
