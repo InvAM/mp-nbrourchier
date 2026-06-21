@@ -21,6 +21,22 @@ function CheckoutContent() {
   const [cardFormReady, setCardFormReady] = useState(false);
   const [tabLoading, setTabLoading] = useState(false);
 
+  // Modal de confirmación de correo
+  const [emailConfirm, setEmailConfirm] = useState(null); // { email } | null
+  const emailConfirmResolverRef = useRef(null);
+  const askEmailConfirm = useCallback((email) => {
+    return new Promise((resolve) => {
+      emailConfirmResolverRef.current = resolve;
+      setEmailConfirm({ email });
+    });
+  }, []);
+  const resolveEmailConfirm = useCallback((confirmed) => {
+    setEmailConfirm(null);
+    const resolver = emailConfirmResolverRef.current;
+    emailConfirmResolverRef.current = null;
+    if (resolver) resolver(confirmed);
+  }, []);
+
   // Datos del comprador
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -234,7 +250,7 @@ function CheckoutContent() {
           setCardFormReady(true);
           webLog.info(SCOPE, "Card form ready");
         },
-        onSubmit: (event) => {
+        onSubmit: async (event) => {
           event.preventDefault();
           const safeFirstName = (firstNameValueRef.current || "").trim();
           const safeLastName = (lastNameValueRef.current || "").trim();
@@ -244,9 +260,7 @@ function CheckoutContent() {
           }
           setError(null);
           const { paymentMethodId: payment_method_id, issuerId: issuer_id, cardholderEmail: email, amount, token, installments, identificationNumber, identificationType } = cardForm.getCardFormData();
-          const confirmedEmail = window.confirm(
-            `Confirma tu correo electrónico:\n\n${email}\n\nAhí recibirás tu compra. ¿Es correcto?`
-          );
+          const confirmedEmail = await askEmailConfirm(email);
           if (!confirmedEmail) {
             webLog.info(SCOPE, "Card payment cancelled at email confirmation");
             return;
@@ -357,6 +371,7 @@ function CheckoutContent() {
     tag2,
     baseAmount,
     handlePaymentResult,
+    askEmailConfirm,
   ]);
 
   const handleYapeSubmit = useCallback(
@@ -370,9 +385,7 @@ function CheckoutContent() {
         setError("Por favor ingresa nombre, apellido y email.");
         return;
       }
-      const confirmedEmail = window.confirm(
-        `Confirma tu correo electrónico:\n\n${safeEmail}\n\nAhí recibirás tu compra. ¿Es correcto?`
-      );
+      const confirmedEmail = await askEmailConfirm(safeEmail);
       if (!confirmedEmail) {
         webLog.info(SCOPE, "Yape payment cancelled at email confirmation");
         return;
@@ -467,6 +480,7 @@ function CheckoutContent() {
       offerInfo,
       selectedExtraTags,
       handlePaymentResult,
+      askEmailConfirm,
     ]
   );
 
@@ -767,6 +781,46 @@ function CheckoutContent() {
         </form>
       )}
       </div>
+
+      {emailConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => resolveEmailConfirm(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-gray-900">Confirma tu correo</h3>
+            <p className="mt-2 text-sm text-gray-500">
+              Aquí recibirás tu compra. Asegúrate de que esté bien escrito.
+            </p>
+            <div className="mt-4 rounded-lg bg-[#e0e5eb] px-4 py-3 text-center">
+              <span className="break-all text-base font-semibold text-[#960621]">
+                {emailConfirm.email || "(sin correo)"}
+              </span>
+            </div>
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row-reverse">
+              <button
+                type="button"
+                onClick={() => resolveEmailConfirm(true)}
+                className="h-11 flex-1 rounded-lg bg-[#960621] text-base font-semibold text-white cursor-pointer hover:opacity-90"
+              >
+                Sí, es correcto
+              </button>
+              <button
+                type="button"
+                onClick={() => resolveEmailConfirm(false)}
+                className="h-11 flex-1 rounded-lg border border-gray-300 bg-white text-base font-medium text-gray-600 cursor-pointer hover:bg-gray-50"
+              >
+                Corregir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
