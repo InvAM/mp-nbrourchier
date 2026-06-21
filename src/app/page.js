@@ -243,8 +243,15 @@ function CheckoutContent() {
             return;
           }
           setError(null);
-          setProcessing(true);
           const { paymentMethodId: payment_method_id, issuerId: issuer_id, cardholderEmail: email, amount, token, installments, identificationNumber, identificationType } = cardForm.getCardFormData();
+          const confirmedEmail = window.confirm(
+            `Confirma tu correo electrónico:\n\n${email}\n\nAhí recibirás tu compra. ¿Es correcto?`
+          );
+          if (!confirmedEmail) {
+            webLog.info(SCOPE, "Card payment cancelled at email confirmation");
+            return;
+          }
+          setProcessing(true);
           const currentTotal = Number(
             totalAmountRef.current || productInfo.price || amount || 0
           );
@@ -361,6 +368,13 @@ function CheckoutContent() {
       const safeEmail = (yapeEmailValueRef.current || "").trim();
       if (!safeFirstName || !safeLastName || !safeEmail) {
         setError("Por favor ingresa nombre, apellido y email.");
+        return;
+      }
+      const confirmedEmail = window.confirm(
+        `Confirma tu correo electrónico:\n\n${safeEmail}\n\nAhí recibirás tu compra. ¿Es correcto?`
+      );
+      if (!confirmedEmail) {
+        webLog.info(SCOPE, "Yape payment cancelled at email confirmation");
         return;
       }
       setError(null);
